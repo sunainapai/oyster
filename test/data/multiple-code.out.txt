@@ -1,0 +1,2 @@
+This line has multiple code blocks in a single line.
+adjacent code block 1.adjacent code block 2.
