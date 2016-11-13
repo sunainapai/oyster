@@ -59,8 +59,8 @@ NAME=${0##*/}
 #   1 If the rendering failed.
 render()
 {
-    _eval_embedded_shell "$1" > _tmp/content.html
-    _content=$(cat _tmp/content.html)
+    _eval_embedded_shell "$1" > /tmp/content.html
+    _content=$(cat /tmp/content.html)
     while [ -n "$_template" ]
     do
         template_file=$_template
@@ -69,8 +69,8 @@ render()
         # does not define a template, _template variable remains unset
         # which ends the loop.
         unset _template
-        _eval_embedded_shell "$template_file" > _tmp/content.html
-        _content=$(cat _tmp/content.html)
+        _eval_embedded_shell "$template_file" > /tmp/content.html
+        _content=$(cat /tmp/content.html)
     done
 
     # Introduce new line at the end of file to overcome noeol.
@@ -94,8 +94,8 @@ _eval_embedded_shell()
         # Each output line contains a single token (i.e. static text or
         # shell code). These lines of tokens are fed to the inner while
         # loop.
-        printf "%s" "$_line" | sed "s/{{/\n{{/g" | sed "s/}}/}}\n/g" > _tmp/tokens.html
-        tokens=$(cat _tmp/tokens.html)
+        printf "%s" "$_line" | sed "s/{{/\n{{/g" | sed "s/}}/}}\n/g" > /tmp/tokens.html
+        tokens=$(cat /tmp/tokens.html)
 
         # Loop over the each line of tokenized input and evaluate the
         # shell-script-tokens.
@@ -276,9 +276,7 @@ render_dir()
 build_site()
 {
     rm -rf _site
-    rm -rf _tmp
-    # TODO create _site, _tmp
-    # TODO remove dependency on the presence of _tmp
+    # TODO create _site
     . ./site.sh
 }
 
