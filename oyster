@@ -33,6 +33,10 @@ SUPPORT_URL="https://github.com/sunainapai/oyster/issues"
 NAME=${0##*/}
 
 
+NL="
+"
+
+
 # DESCRIPTION
 #   Read file, find and execute shell commands embedded in text and
 #   replace each command with the standard output written by the
@@ -94,7 +98,9 @@ _eval_embedded_shell()
         # Each output line contains a single token (i.e. static text or
         # shell code). These lines of tokens are fed to the inner while
         # loop.
-        printf "%s" "$_line" | sed "s/{{/\n{{/g" | sed "s/}}/}}\n/g" > /tmp/tokens.html
+        printf "%s" "$_line" | sed "s/{{/\\$NL{{/g" |
+                               sed "s/}}/}}\\$NL/g" > /tmp/tokens.html
+
         tokens=$(cat /tmp/tokens.html)
 
         # Loop over the each line of tokenized input and evaluate the
