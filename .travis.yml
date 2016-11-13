@@ -8,4 +8,5 @@ install:
 
 script:
     - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo make test_all; fi
+    - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo make coveralls; fi
     - if [ "$TRAVIS_OS_NAME" = "osx" ]; then sudo make test_unix; fi

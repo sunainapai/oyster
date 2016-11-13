@@ -36,6 +36,10 @@ coverage: .FORCE
 	rm -rf coverage
 	kcov --exclude-path=test/test coverage test/test
 
+coveralls:
+	rm -rf coverage
+	kcov --coveralls-id=$$TRAVIS_JOB_ID --exclude-path=test/test coverage test/test
+
 clean:
 	rm -rf coverage
 
