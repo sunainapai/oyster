@@ -34,6 +34,12 @@ test_simple_file()
     diff -u "$TDATA/simple.out.txt" "$TWORK/simple.out.txt"
 }
 
+test_stdin()
+{
+    render < "$TDATA/simple.in.txt" > "$TWORK/simple.out.txt"
+    diff -u "$TDATA/simple.out.txt" "$TWORK/simple.out.txt"
+}
+
 test_whitespace_preservation()
 {
     render "$TDATA/whitespace.in.txt" > "$TWORK/whitespace.out.txt"
