@@ -63,7 +63,15 @@ NL="
 #   1 If the rendering failed.
 render()
 {
-    _eval_embedded_shell "$1" > /tmp/content.html
+    if [ -n "$1" ]
+    then
+        _eval_embedded_shell < "$1" > /tmp/content.html
+    else
+        _eval_embedded_shell <<eof > /tmp/content.html
+$(cat)
+eof
+    fi
+
     _content=$(cat /tmp/content.html)
     while [ -n "$_template" ]
     do
@@ -88,8 +96,6 @@ render()
 # TODO comment
 _eval_embedded_shell()
 {
-    exec_file=$1
-
     while IFS= read -r _line
     do
 
@@ -131,9 +137,8 @@ eof
     # Write a new line as we have reached the end of the original source
     # code line.
     printf "\n"
-    done < $exec_file
+    done
 
-    unset exec_file
     unset mode
     unset code
 }
