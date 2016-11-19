@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Oyster - Embedded shell based static blog generator 
+# Oyster - Embedded shell based static blog generator
 
 # The MIT License (MIT)
 #
@@ -37,6 +37,13 @@ NL="
 "
 
 
+# CORE FUNCTIONS
+# ==============
+# The following core functions form the core API that may be invoked
+# from the configuration script (site.sh by default) to render a blog or
+# website.
+
+
 # DESCRIPTION
 #   Read file, find and execute shell commands embedded in text and
 #   replace each command with the standard output written by the
@@ -52,15 +59,15 @@ NL="
 #   The standard input is used as file if no file operand is specified.
 #
 # STDOUT
-#   The rendered file is written to standard output.
+#   The rendered file is written to the standard output.
 #
 # STDERR
-#   Any errors encountered while rendering are written to standard
+#   Any errors encountered while rendering are written to the standard
 #   error.
 #
 # EXIT STATUS
 #   0 If the file is rendered successfully.
-#   1 If the rendering failed.
+#   1 If the rendering fails.
 render()
 {
     if [ -n "$1" ]
@@ -93,7 +100,218 @@ eof
 }
 
 
-# TODO comment
+# DESCRIPTION
+#   Set base template for a content file being rendered.
+#
+#   A content file is a file that invokes the 'template' command. The
+#   filename specified as argument to the 'template' command is known as
+#   the template file.
+#
+#   This function must be called with the path to the template file as
+#   its argument. The path must be relative to the directory where
+#   oyster is run.
+#
+#   Once this function is called in a content file, the template file
+#   specified as the argument is considered to be the base template for
+#   the content file. The files are rendered according to the following
+#   algorithm.
+#
+#     1. The content file is rendered first.
+#     2. If the content file does not invoke the 'template' function,
+#        then rendering is complete. No further steps are performed.
+#     3. If the content file invokes the 'template' function, then
+#        the template file is rendered.
+#     4. Any occurrence of the 'content' function call in the template
+#        file is replaced with the rendered content file.
+#     5. Now assume the template file to be content file and go to step 2.
+#
+#   Note that a template file itself may be a content file if it
+#   invokes the 'template' command.
+#
+# OPERANDS
+#   1. Path to the template file relative to where oyster is run.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   Not used.
+#
+# STDERR
+#   Not used.
+#
+# EXIT STATUS
+#   0
+template()
+{
+    _template=$1
+}
+
+
+# DESCRIPTION
+#   Output rendered content file that invoked the current template file.
+#
+#   See the comments for the 'template' function for more details about
+#   how the 'template' and 'content' functions work together.
+#
+# OPERANDS
+#   None.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   Not used.
+#
+# STDERR
+#   Not used.
+#
+# EXIT STATUS
+#   0
+content()
+{
+    printf %s "$_content"
+}
+
+
+# UTILITY FUNCTIONS
+# =================
+# The following utility functions form the utility API that may be
+# invoked from the configuration script (site.sh by default).
+
+
+# DESCRIPTION
+#   Render multiple files in a directory.
+#
+# OPERANDS
+#   1. Path to source directory containing post files.
+#   2. File pattern (glob) to search for post files.
+#   3. Template to use to render files in source directory.
+#   4. Output directory where rendered files are written.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   Progress details is written to the standard output.
+#
+# STDERR
+#   Errors encountered while rendering is written to the standard error.
+#
+# EXIT STATUS
+#   0 On success.
+#   1 On failure.
+render_dir()
+{
+    find "$1" -name "$2" |
+    while read -r file
+    do
+        # Create directory for post's index.html.
+        target_path="$4"/$(get_post_id "$file")/index.html
+        mkdir -p "$(dirname "$target_path")"
+        post_create_date=$(get_post_date "$file")
+        echo Rendering "$file" ...
+        template "$3"
+        unset post_title
+        render "$file" > "$target_path"
+    done
+}
+
+
+# DESCRIPTION
+#   Extract post ID from post file path.
+#
+#   The post ID is used as post slug in the URL. The post ID is
+#   determined from the path to the post. The filename of the post file
+#   is extracted from the path, and then the date and extension name is
+#   removed (i.e. YYYY-MM-DD- format date is removed as well as .ext
+#   format extension is removed) from the filename to obtain the post ID.
+#
+# OPERANDS
+#   1. Path to post file.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   Post ID is written to the standard output.
+#
+# STDERR
+#   Not used.
+#
+# EXIT STATUS
+#   0 On success.
+#   1 On failure.
+get_post_id()
+{
+    post_file=$1
+    post_id=${post_file##*/????-??-??-}
+    post_id="${post_id%.html}"
+    printf %s "$post_id"
+
+    unset post_file
+    unset post_id
+}
+
+
+# DESCRIPTION
+#   Extract post date from post file path.
+#
+# OPERANDS
+#   1. Path to post file.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   Progress details is written to the standard output.
+#
+# STDERR
+#   Not used.
+#
+# EXIT STATUS
+#   0 On success.
+#   1 On failure.
+get_post_date()
+{
+    printf %s "${1##*/}" | sed "s/.*\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\).*/\1/"
+}
+
+
+# PRIVATE FUNCTIONS
+# =================
+# The following private functions are not part of the API. They should
+# not be invoked directly by the configuration script.
+
+
+# DESCRIPTION
+#   Find shell code embedded in the input text, evaluate the shell
+#   commands and replace the shell code with their output.
+#
+#   The input text is tokenized into two kinds of text:
+#
+#     1. Shell code delimited with shell code tags (default: '{{' and '}}').
+#     2. Static text, i.e. any text that is not shell code.
+#
+#   Each block of shell code is executed and the block is replaced with
+#   the standard output generated the shell code.
+#
+# OPERANDS
+#   None.
+#
+# STDIN
+#   The standard input is used as the file to be rendered.
+#
+# STDOUT
+#   The rendered file is written to the standard output.
+#
+# STDERR
+#   Any errors encountered while rendering are written to the standard
+#   error.
+#
+# EXIT STATUS
+#   0 If the file is rendered successfully.
+#   1 If the rendering fails.
 _eval_embedded_shell()
 {
     while IFS= read -r _line
@@ -112,7 +330,7 @@ _eval_embedded_shell()
         # Loop over the each line of tokenized input and evaluate the
         # shell-script-tokens.
         # Set IFS to nothing, to preserve indentation, whitespaces etc.
-        while IFS= read -r _token 
+        while IFS= read -r _token
         do
             printf "%s" "$_token" | grep -q "^{{" && mode=code || mode=text
 
@@ -144,64 +362,79 @@ eof
 }
 
 
-# TODO comment
-template()
+# DESCRIPTION
+#   Starting point of this script.
+#
+# OPERANDS
+#   All command line arguments this script was invoked with.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   Output of some command line arguments such as -h/--help,
+#   -v/--version, etc. are written to the standard output.
+#
+# STDERR
+#   Any errors encountered while processing command line arguments or
+#   while rendering files are written to the standard error.
+#
+# EXIT STATUS
+#   0 If the script completes running successfully.
+#   1 If there is a failure.
+_main()
 {
-    _template=$1
-}
-
-
-# TODO comment
-content()
-{
-    printf %s "$_content"
-}
-
-# TODO: provide a command to loop over files and render them
-# TODO: expose generate as render; fix generate rendering bug
-
-# TODO: write tests especially write test for preserving indentation
-# TODO: support arbitrary configuration file ex. site.sh, site, etc.
-# TODO: change_tags
-# TODO: out
-
-# TODO comment
-main()
-{
-    parse_arguments "$@"
-    build_site
-    if [ "$serve" = yes ]
+    _parse_arguments "$@"
+    _build_site
+    if [ "$_serve" = yes ]
     then
-        serve_site
+        _serve_site
     fi
 }
 
 
-# TODO comment
-parse_arguments()
+# DESCRIPTION
+#   Parse command line arguments passed to this script.
+#
+# OPERANDS
+#   All command line arguments this script was invoked with.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   Output of some command line arguments such as -h/--help,
+#   -v/--version, etc. are written to the standard output.
+#
+# STDERR
+#   Any errors encountered while processing command line arguments or
+#   while rendering files are written to the standard error.
+#
+# EXIT STATUS
+#   0 If the command line arguments are parsed and processed successfully.
+#   1 If unknown command line option or argument is encountered.
+_parse_arguments()
 {
     while [ $# -gt 0 ]
     do
         case $1 in
             -h | --help)
-                show_help
+                _show_help
                 exit
                 ;;
             -v | --version)
-                show_version
+                _show_version
                 exit
                 ;;
             -s | --serve)
-                serve=yes
+                _serve=yes
                 shift
                 ;;
             -*)
-                # TODO make an error function to print $NAME: arg1 arg2 ... >&2
                 printf "Unknown option '%s'" "$1"
                 exit
                 ;;
             *)
-                # TODO call the error function
                 printf "Unknown argument '%s'" "$1"
                 exit
                 ;;
@@ -210,13 +443,32 @@ parse_arguments()
 }
 
 
-# TODO comment
-show_help()
+# DESCRIPTION
+#   Show help.
+#
+# OPERANDS
+#   None.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   Usage details is written to the standard output.
+#
+# STDERR
+#   Not used.
+#
+# EXIT STATUS
+#   0
+_show_help()
 {
     cat <<eof
 Usage: $NAME [-s] [-h] [-v]
 
-TODO: write a short description
+Render static website. A site configuration script (default: ./site.sh)
+is executed to render the website. It is the responsibility of the site
+configuration script to call the oyster API to render the site source
+files and write the rendered files into the site output directory.
 
 Options:
   -s, --serve    Serve site with Python HTTP server.
@@ -228,8 +480,24 @@ eof
 }
 
 
-# Show version and copyright.
-show_version()
+# DESCRIPTION
+#   Show version and copyright.
+#
+# OPERANDS
+#   None.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   Version and copyright details are written to the standard output.
+#
+# STDERR
+#   Not used.
+#
+# EXIT STATUS
+#   0
+_show_version()
 {
     cat <<eof
 Oyster $VERSION
@@ -244,63 +512,63 @@ express or implied. See the MIT License for details.
 eof
 }
 
-get_post_id()
-{
-    post_file=$1
-    post_id=${post_file##*/????-??-??-}
-    post_id="${post_id%.html}"
-    printf %s "$post_id"
 
-    unset post_file
-    unset post_id
-}
-
-get_post_date()
-{
-    printf %s "${1##*/}" | sed "s/.*\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\).*/\1/"
-}
-
-# Render posts.
+# DESCRIPTION
+#   Build website in current directory.
+#
+#   This function merely executes a site configuration script (./site.sh
+#   by default). It is the responsibility of the site configuration
+#   script to invoke the oyster API to build the site and write the
+#   rendered files into a site output directory.
 #
 # OPERANDS
-#   1. Source directory.
-#   2. File pattern.
-#   3. Template to use to render files in source directory.
-#   4. Output directory where rendered files are written.
-render_dir()
+#   None.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   Site configuration script's standard output is going to be written here.
+#
+# STDERR
+#   Site configuration script's standard error is going to be written here.
+#
+# EXIT STATUS
+#   0 On success.
+#   1 On failure.
+_build_site()
 {
-    find "$1" -name "$2" |
-    while read -r file
-    do
-        # Create directory for post's index.html.
-        target_path="$4"/$(get_post_id "$file")/index.html
-        mkdir -p "$(dirname "$target_path")"
-        post_create_date=$(get_post_date "$file")
-        echo Rendering "$file" ...
-        template "$3"
-        unset post_title
-        render "$file" > "$target_path" 
-    done
-}
-
-# TODO comment
-build_site()
-{
-    rm -rf _site
-    # TODO create _site
     . ./site.sh
 }
 
 
-# TODO comment
-serve_site()
+# DESCRIPTION
+#   Serve generated website using Python's HTTP server.
+#
+#   This function assumes that the generated website is rendered within
+#   _site directory relative to the current directory.
+#
+# OPERANDS
+#   None.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   Python HTTP server's standard output is going to be written here.
+#
+# STDERR
+#   Python HTTP server's standard error is going to be written here.
+#
+# EXIT STATUS
+#   0 On success.
+#   1 On failure.
+_serve_site()
 {
     cd _site
-    # TODO try python -m SimpleHTTPServer, then python3, else error
     python3 -m http.server
 }
 
 
-# TODO comment
-# Test files set variable import to yes in the environment.
-[ "$import" != yes ] && main "$@"
+# Test files set _import=yes to prevent _main() from executing.
+[ "$_import" = yes ] || _main "$@"
