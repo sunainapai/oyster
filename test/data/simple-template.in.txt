@@ -1,0 +1,3 @@
+content: foo
+{{ template test/data/template1.txt }}
+content: bar

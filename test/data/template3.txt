@@ -1,0 +1,3 @@
+base template: foo
+{{ content }}
+base template: bar

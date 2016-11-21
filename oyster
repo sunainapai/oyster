@@ -88,7 +88,7 @@ eof
         # does not define a template, _template variable remains unset
         # which ends the loop.
         unset _template
-        _eval_embedded_shell "$template_file" > /tmp/content.html
+        _eval_embedded_shell < "$template_file" > /tmp/content.html
         _content=$(cat /tmp/content.html)
     done
 
@@ -316,7 +316,6 @@ _eval_embedded_shell()
 {
     while IFS= read -r _line
     do
-
         # Tokenize input: For each line in the input file, place each
         # occurrence of shell code, e.g. "{{ date }}", on its own line.
         # Each output line contains a single token (i.e. static text or
@@ -431,12 +430,10 @@ _parse_arguments()
                 shift
                 ;;
             -*)
-                printf "Unknown option '%s'" "$1"
-                exit
+                quit Unknown option \""$1"\".
                 ;;
             *)
-                printf "Unknown argument '%s'" "$1"
-                exit
+                quit Surplus argument \""$1"\".
                 ;;
         esac
     done
@@ -514,6 +511,33 @@ eof
 
 
 # DESCRIPTION
+#   Terminate the script with an error message.
+#
+# OPERANDS
+#   The strings to be written as error message to the standard error.
+#   An arbitrary number of string arguments may be specified. All
+#   arguments are joined into a single error message with spaces
+#   introduced between arguments.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   Not used.
+#
+# STDERR
+#   Error message is written to the standard error.
+#
+# EXIT STATUS
+#   1
+quit()
+{
+    printf "%s: %s\n" "$NAME" "$*" >&2
+    exit 1
+}
+
+
+# DESCRIPTION
 #   Build website in current directory.
 #
 #   This function merely executes a site configuration script (./site.sh
@@ -542,6 +566,14 @@ _build_site()
 }
 
 
+_SERVE_COMMANDS="$(cat <<eof
+python3 -c "import http.server" 2> /dev/null && python3 -m http.server
+python -c "import http.server" 2> /dev/null && python -m http.server
+python -c "import SimpleHTTPServer" 2> /dev/null && python -m SimpleHTTPServer
+eof
+)"
+
+
 # DESCRIPTION
 #   Serve generated website using Python's HTTP server.
 #
@@ -565,8 +597,13 @@ _build_site()
 #   1 On failure.
 _serve_site()
 {
-    cd _site
-    python3 -m http.server
+    cd _site || quit Cannot find site directory.
+
+    printf "%s\n" "$_SERVE_COMMANDS" | while read -r _command
+    do
+        printf "Trying %s ...\n" "$_command"
+        eval "$_command" && break
+    done
 }
 
 

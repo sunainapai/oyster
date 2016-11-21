@@ -1,0 +1,5 @@
+template: foo
+content: foo
+
+content: bar
+template: bar

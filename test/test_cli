@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Tests for render() function.
+# Tests for command line interface.
 
 # The MIT License (MIT)
 #
@@ -27,41 +27,44 @@
 
 _import=yes . ./oyster 
 
-test_simple_file()
+test_help()
 {
-    render "$TDATA/simple.in.txt" > "$TWORK/simple.out.txt"
-    diff -u "$TDATA/simple.out.txt" "$TWORK/simple.out.txt"
+    for opt in -h --help
+    do
+        _main $opt | head -n 1 | grep -q "^Usage:" || return 1
+    done
 }
 
-test_stdin()
+test_version()
 {
-    render < "$TDATA/simple.in.txt" > "$TWORK/simple.out.txt"
-    diff -u "$TDATA/simple.out.txt" "$TWORK/simple.out.txt"
+    for opt in -v --version
+    do
+        _main $opt | head -n 1 | grep -q "^.* $VERSION$" || return 1
+    done
 }
 
-test_whitespace_preservation()
+test_unknown_option()
 {
-    render "$TDATA/whitespace.in.txt" > "$TWORK/whitespace.out.txt"
-    diff -u "$TDATA/whitespace.out.txt" "$TWORK/whitespace.out.txt"
+    _main -x 2>&1 | grep -q '^.*: Unknown option "-x"\.$' || return 1
+    _main --xyz 2>&1 | grep -q '^.*: Unknown option "--xyz"\.$' || return 1
 }
 
-test_multiple_code_blocks_in_line()
+test_surplus_argument()
 {
-    render "$TDATA/multiple-code.in.txt" > "$TWORK/multiple-code.out.txt"
-    diff -u "$TDATA/multiple-code.out.txt" "$TWORK/multiple-code.out.txt"
+    _main foo 2>&1 | grep -q '^.*: Surplus argument "foo"\.$'
 }
 
-test_simple_template()
+test_no_args()
 {
-    render "$TDATA/simple-template.in.txt" > "$TWORK/simple-template.out.txt"
-    diff -u "$TDATA/simple-template.out.txt" "$TWORK/simple-template.out.txt"
+    cd "$TDATA/blank-site.in"
+    _main | grep -q "^site configuration$"
+    cd "$OLDPWD"
 }
 
-test_cascaded_template()
+test_serve()
 {
-    render "$TDATA/cascaded-template.in.txt" > \
-           "$TWORK/cascaded-template.out.txt"
-
-    diff -u "$TDATA/cascaded-template.out.txt" \
-            "$TWORK/cascaded-template.out.txt"
+    cd "$TDATA/blank-site.in"
+    _SERVE_COMMANDS="false${NL}false${NL}echo foo"
+    _main --serve | grep -q foo
+    cd "$OLDPWD"
 }
