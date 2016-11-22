@@ -57,7 +57,7 @@ test_surplus_argument()
 test_no_args()
 {
     cd "$TDATA/blank-site.in"
-    _main | grep -q "^site configuration$"
+    _main | grep -q "^site configuration$" || return 1
     cd "$OLDPWD"
 }
 
@@ -65,6 +65,6 @@ test_serve()
 {
     cd "$TDATA/blank-site.in"
     _SERVE_COMMANDS="false${NL}false${NL}echo foo"
-    _main --serve | grep -q foo
+    _main --serve | grep -q foo || return 1
     cd "$OLDPWD"
 }
