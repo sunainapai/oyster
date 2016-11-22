@@ -1,0 +1,8 @@
+base template: foo
+
+intermediate template: foo
+
+content: foo
+content: bar
+intermediate template: bar
+base template: bar

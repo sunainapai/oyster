@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Tests for render() function.
+# Tests for render_dir() function.
 
 # The MIT License (MIT)
 #
@@ -27,41 +27,8 @@
 
 _import=yes . ./oyster 
 
-test_simple_file()
+test_render_dir()
 {
-    render "$TDATA/simple.in.txt" > "$TWORK/simple.out.txt"
-    diff -u "$TDATA/simple.out.txt" "$TWORK/simple.out.txt"
-}
-
-test_stdin()
-{
-    render < "$TDATA/simple.in.txt" > "$TWORK/simple.out.txt"
-    diff -u "$TDATA/simple.out.txt" "$TWORK/simple.out.txt"
-}
-
-test_whitespace_preservation()
-{
-    render "$TDATA/whitespace.in.txt" > "$TWORK/whitespace.out.txt"
-    diff -u "$TDATA/whitespace.out.txt" "$TWORK/whitespace.out.txt"
-}
-
-test_multiple_code_blocks_in_line()
-{
-    render "$TDATA/multiple-code.in.txt" > "$TWORK/multiple-code.out.txt"
-    diff -u "$TDATA/multiple-code.out.txt" "$TWORK/multiple-code.out.txt"
-}
-
-test_simple_template()
-{
-    render "$TDATA/simple-template.in.txt" > "$TWORK/simple-template.out.txt"
-    diff -u "$TDATA/simple-template.out.txt" "$TWORK/simple-template.out.txt"
-}
-
-test_cascaded_template()
-{
-    render "$TDATA/cascaded-template.in.txt" > \
-           "$TWORK/cascaded-template.out.txt"
-
-    diff -u "$TDATA/cascaded-template.out.txt" \
-            "$TWORK/cascaded-template.out.txt"
+    render_dir "$TDATA/dated-blog.in" "*.html" "" "$TWORK/blog.out"
+    diff -u "$TDATA/blog.out" "$TWORK/blog.out"
 }

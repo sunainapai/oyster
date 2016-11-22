@@ -1,0 +1,4 @@
+{{ template test/data/template3.txt }}
+intermediate template: foo
+{{ content }}
+intermediate template: bar
