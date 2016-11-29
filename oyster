@@ -25,7 +25,6 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-
 VERSION=0.1.0-DEV
 AUTHOR="Sunaina Pai"
 COPYRIGHT="Copyright (c) 2016 $AUTHOR"
@@ -82,13 +81,13 @@ eof
     _content=$(cat /tmp/content.html)
     while [ -n "$_template" ]
     do
-        template_file=$_template
+        _template_file=$_template
         # Store the file name to execute, unset _template so that it can
         # be defined afresh in next execution. If the next execution
         # does not define a template, _template variable remains unset
         # which ends the loop.
         unset _template
-        _eval_embedded_shell < "$template_file" > /tmp/content.html
+        _eval_embedded_shell < "$_template_file" > /tmp/content.html
         _content=$(cat /tmp/content.html)
     done
 
@@ -96,7 +95,7 @@ eof
     printf "%s\n" "$_content"
 
     unset _content
-    unset template_file
+    unset _template_file
 }
 
 
@@ -321,6 +320,7 @@ _eval_embedded_shell()
         # Each output line contains a single token (i.e. static text or
         # shell code). These lines of tokens are fed to the inner while
         # loop.
+
         printf "%s" "$_line" | sed "s/{{/\\$NL{{/g" |
                                sed "s/}}/}}\\$NL/g" > /tmp/tokens.html
 
@@ -339,8 +339,8 @@ _eval_embedded_shell()
                 # shell script token. We undo that by printing the
                 # output of the evaluated shell script without any
                 # preceding newline.
-                code=$(printf "%s" "$_token" | sed "s/.*{{\(.*\)}}.*/\1/")
-                eval "$code"
+                _code=$(printf "%s" "$_token" | sed "s/.*{{\(.*\)}}.*/\1/")
+                eval "$_code"
             else
                 printf "%s" "$_token"
             fi
@@ -351,13 +351,15 @@ _eval_embedded_shell()
         done <<eof
 $(printf %s "$tokens")
 eof
-    # Write a new line as we have reached the end of the original source
-    # code line.
-    printf "\n"
-    done
+        # Write a new line as we have reached the end of the original source
+        # code line.
+        printf "\n"
+        done
 
     unset mode
-    unset code
+    unset _code
+    unset _line
+    unset _token
 }
 
 
