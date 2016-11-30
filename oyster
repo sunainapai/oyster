@@ -25,6 +25,7 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+
 VERSION=0.1.0-DEV
 AUTHOR="Sunaina Pai"
 COPYRIGHT="Copyright (c) 2016 $AUTHOR"
@@ -321,10 +322,8 @@ _eval_embedded_shell()
         # shell code). These lines of tokens are fed to the inner while
         # loop.
 
-        printf "%s" "$_line" | sed "s/{{/\\$NL{{/g" |
-                               sed "s/}}/}}\\$NL/g" > /tmp/tokens.html
-
-        tokens=$(cat /tmp/tokens.html)
+        tokens=$(printf "%s" "$_line" | sed "s/{{/\\$NL{{/g" |
+                               sed "s/}}/}}\\$NL/g")
 
         # Loop over the each line of tokenized input and evaluate the
         # shell-script-tokens.
