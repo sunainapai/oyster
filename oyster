@@ -330,9 +330,7 @@ _eval_embedded_shell()
         # Set IFS to nothing, to preserve indentation, whitespaces etc.
         while IFS= read -r _token
         do
-            printf "%s" "$_token" | grep -q "^{{" && mode=code || mode=text
-
-            if [ $mode = code ]
+            if printf "%s" "$_token" | grep -q "^{{"
             then
                 # While tokenizing, we inserted a newline before each
                 # shell script token. We undo that by printing the
@@ -355,7 +353,6 @@ eof
         printf "\n"
         done
 
-    unset mode
     unset _code
     unset _line
     unset _token
