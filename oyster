@@ -173,6 +173,11 @@ content()
     printf %s "$_content"
 }
 
+include()
+{
+    _eval_embedded_shell < $1
+}
+
 
 # UTILITY FUNCTIONS
 # =================
