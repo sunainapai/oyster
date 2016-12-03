@@ -1,2 +1,2 @@
-Hello {{ printf %s World! }}
+Hello {{ printf "World!" }}
 {{ echo "How are you?" }}

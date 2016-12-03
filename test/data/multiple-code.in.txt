@@ -1,2 +1,2 @@
-This line has {{ printf "%s" "multiple code" }} blocks {{ printf "%s" "in a single line." }}
-{{ printf "%s" "adjacent code block 1." }}{{ printf "%s" "adjacent code block 2." }}
+This line has {{ printf "multiple code" }} blocks {{ printf "in a single line." }}
+{{ printf "adjacent code block 1." }}{{ printf "adjacent code block 2." }}

@@ -1,0 +1,7 @@
+content: foo
+include: foo
+include: bar
+include: baz
+
+
+content: bar

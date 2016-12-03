@@ -65,3 +65,21 @@ test_cascaded_template()
     diff -u "$TDATA/cascaded-template.out.txt" \
             "$TWORK/cascaded-template.out.txt"
 }
+
+test_include_file()
+{
+    render "$TDATA/include-file.in.txt" > \
+           "$TWORK/include-file.out.txt"
+
+    diff -u "$TDATA/include-file.out.txt" \
+            "$TWORK/include-file.out.txt"
+}
+
+test_include_stdin()
+{
+    render "$TDATA/include-stdin.in.txt" > \
+           "$TWORK/include-stdin.out.txt"
+
+    diff -u "$TDATA/include-file.out.txt" \
+            "$TWORK/include-stdin.out.txt"
+}

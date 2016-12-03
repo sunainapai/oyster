@@ -40,8 +40,8 @@ NL="
 # CORE FUNCTIONS
 # ==============
 # The following core functions form the core API that may be invoked
-# from the configuration script (site.sh by default) to render a blog or
-# website.
+# from the site configuration script (site.sh by default) to render a
+# blog or website.
 
 
 # DESCRIPTION
@@ -52,8 +52,13 @@ NL="
 #   The output generated due to the last template processed is the
 #   output of this function.
 #
+#   Limitation: This function may only be called from the site
+#   configuration script. If a text being rendered invokes the render
+#   function within embedded shell code, the behaviour is undefined.
+#   This function must not be called from embedded shell code.
+#
 # OPERANDS
-#   1. File to be rendered.
+#   1. File to be rendered. (Optional)
 #
 # STDIN
 #   The standard input is used as file if no file operand is specified.
@@ -173,9 +178,44 @@ content()
     printf %s "$_content"
 }
 
+
+# DESCRIPTION
+#   Render input text and include in the current text being rendered.
+#   This function is similar to the render function with the following
+#   exceptions:
+#
+#     1. This function may be called within embedded shell code.
+#     2. This function ignores the template function call.
+#
+#   Therefore, this function cannot render any templates invoked within
+#   embedded shell code.
+#
+# OPERANDS
+#   1. File to be rendered. (Optional)
+#
+# STDIN
+#   The standard input is used as file if no file operand is specified.
+#
+# STDOUT
+#   The rendered file is written to the standard output.
+#
+# STDERR
+#   Any errors encountered while rendering are written to the standard
+#   error.
+#
+# EXIT STATUS
+#   0 If the file is rendered successfully.
+#   1 If the rendering fails.
 include()
 {
-    _eval_embedded_shell < $1
+    if [ -n "$1" ]
+    then
+        _eval_embedded_shell < "$1"
+    else
+        _eval_embedded_shell <<eof
+$(cat)
+eof
+    fi
 }
 
 
@@ -226,11 +266,22 @@ render_dir()
 # DESCRIPTION
 #   Extract post ID from post file path.
 #
-#   The post ID is used as post slug in the URL. The post ID is
-#   determined from the path to the post. The filename of the post file
-#   is extracted from the path, and then the date and extension name is
-#   removed (i.e. YYYY-MM-DD- format date is removed as well as .ext
-#   format extension is removed) from the filename to obtain the post ID.
+#   The syntax of a file name is [date-]title.ext,
+#   e.g. 2016-08-09-hello-world.html, hello-world.html, etc.
+#
+#   This function removes any leading directory path, date, trailing
+#   extension name and returns only the title part of the filename.
+#
+#   Examples:
+#     get_post_id /foo/bar/2016-08-09-hello-world.html => hello-world
+#     get_post_id /foo/bar/hello-world.html => hello-world
+#
+#   Only alphanumeric characters, underscore and hyphen are supported in
+#   the filename. If any other characters are specified in the filename,
+#   the behaviour is unspecified.
+#
+#   The post ID is used as post slug in the URL of the post when the
+#   posts are rendered by the render_dir function.
 #
 # OPERANDS
 #   1. Path to post file.
@@ -263,40 +314,15 @@ get_post_id()
 }
 
 
-get_post_date()
-{
-    printf %s "${1##*/}" | sed "s/.*\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\).*/\1/"
-}
-
-
-get_post_year()
-{
-    # Remove leading directory path.
-    set "${1##*/}"
-
-    # Remove everything except year (YYYY).
-    set "${1%-[0-9][0-9]-[0-9][0-9]-.*}"
-
-    # Output the post year.
-    printf %s "$1"
-}
-
-
-strip_html()
-{
-    sed 's/<[^>]*>//g'
-}
-
-
-truncate_text()
-{
-    grep "[[:graph:]]" | sed "s/$/ /" | sed "s/ / \n/g" |
-    head -n $1 | tr -d '\n'
-}
-
-
 # DESCRIPTION
 #   Extract post date from post file path.
+#
+#   The filename must be in YYYY-MM-DD-title.ext format. If not, the
+#   behaviour of this function is undefined.
+#
+#   Examples:
+#     get_post_date /foo/bar/2016-08-09-hello-world.html => 2016-08-09
+#     get_post_date /foo/bar/hello-world.html => Undefined behaviour
 #
 # OPERANDS
 #   1. Path to post file.
@@ -305,7 +331,7 @@ truncate_text()
 #   Not used.
 #
 # STDOUT
-#   Progress details is written to the standard output.
+#   Post date is written to the standard output.
 #
 # STDERR
 #   Not used.
@@ -316,6 +342,106 @@ truncate_text()
 get_post_date()
 {
     printf %s "${1##*/}" | sed "s/.*\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\).*/\1/"
+}
+
+
+# DESCRIPTION
+#   Extract post year from post file path.
+#
+#   The filename must be in YYYY-MM-DD-title.ext format. If not, the
+#   behaviour of this function is undefined.
+#
+#   Examples:
+#     get_post_year /foo/bar/2016-08-09-hello-world.html => 2016
+#     get_post_year /foo/bar/hello-world.html => Undefined behaviour
+#
+# OPERANDS
+#   1. Path to post file.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   Post year is written to the standard output.
+#
+# STDERR
+#   Not used.
+#
+# EXIT STATUS
+#   0 On success.
+#   1 On failure.
+get_post_year()
+{
+    # Remove leading directory path.
+    set "${1##*/}"
+
+    # Remove everything except year (YYYY).
+    set "${1%-[0-9][0-9]-[0-9][0-9]-*}"
+
+    # Output the post year.
+    printf %s "$1"
+}
+
+
+# DESCRIPTION
+#   Remove HTML tags from specified text.
+#
+# OPERANDS
+#   1. Text with HTML tags.
+#
+# STDIN
+#   None.
+#
+# STDOUT
+#   Post year is written to the standard output.
+#
+# STDERR
+#   Not used.
+#
+# EXIT STATUS
+#   0 On success.
+#   1 On failure.
+strip_html()
+{
+    sed 's/<[^>]*>//g'
+}
+
+
+# DESCRIPTION
+#   Truncate text to the specified number of words.
+#
+# OPERANDS
+#   1. Number of words to truncate the given text to.
+#
+# STDIN
+#   Input text.
+#
+# STDOUT
+#   Post year is written to the standard output.
+#
+# STDERR
+#   Not used.
+#
+# EXIT STATUS
+#   0 On success.
+#   1 On failure.
+truncate_text()
+{
+    # Follow each word with a space and newline.
+    sed "s/$/ /" | sed "s/ / \\$NL/g" |
+
+    # Ignore lines consisting only of whitespace and non-printable
+    # characters.
+    grep "[[:graph:]]" |
+
+    # Select the specified number of lines.
+    head -n "$1" |
+
+    # Remove the newlines.
+    tr -d '\n' |
+
+    # Remove the trailing space.
+    sed 's/ $//'
 }
 
 
@@ -362,9 +488,14 @@ _eval_embedded_shell()
         # Each output line contains a single token (i.e. static text or
         # shell code). These lines of tokens are fed to the inner while
         # loop.
-
-        tokens=$(printf "%s" "$_line" | sed "s/{{/\\$NL{{/g" |
-                               sed "s/}}/}}\\$NL/g")
+        #
+        # Note: The three statements below could have been written as a
+        # single pipeline. But they are written as separate statements
+        # to work around a kcov bug; kcov misses all lines except the
+        # last one in a multiline command substitution.
+        tokens=$(printf %s "$_line")
+        tokens=$(printf %s "$tokens" | sed "s/{{/\\$NL{{/g")
+        tokens=$(printf %s "$tokens" | sed "s/}}/}}\\$NL/g")
 
         # Loop over the each line of tokenized input and evaluate the
         # shell-script-tokens.
@@ -605,6 +736,10 @@ _build_site()
 }
 
 
+# Commands to try to serve generated website.
+#
+# Each command is specified in a separate line. Each command is tried in
+# the order specified until a command exits with status code 0.
 _SERVE_COMMANDS="$(cat <<eof
 python3 -c "import http.server" 2> /dev/null && python3 -m http.server
 python -c "import http.server" 2> /dev/null && python -m http.server
