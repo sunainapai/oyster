@@ -252,7 +252,7 @@ render_dir()
     while read -r file
     do
         # Create directory for post's index.html.
-        target_path="$4"/$(get_post_id "$file")/index.html
+        target_path=_site/"$4"/$(get_post_id "$file")/index.html
         mkdir -p "$(dirname "$target_path")"
         post_create_date=$(get_post_date "$file")
         echo Rendering "$file" ...
