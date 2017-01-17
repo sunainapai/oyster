@@ -75,16 +75,18 @@ NL="
 #   1 If the rendering fails.
 render()
 {
+    mkdir -p _cache
+
     if [ -n "$1" ]
     then
-        _eval_embedded_shell < "$1" > /tmp/content.html
+        _eval_embedded_shell < "$1" > _cache/content.html
     else
-        _eval_embedded_shell <<eof > /tmp/content.html
+        _eval_embedded_shell <<eof > _cache/content.html
 $(cat)
 eof
     fi
 
-    _content=$(cat /tmp/content.html)
+    _content=$(cat _cache/content.html)
     while [ -n "$_template" ]
     do
         _template_file=$_template
@@ -93,8 +95,8 @@ eof
         # does not define a template, _template variable remains unset
         # which ends the loop.
         unset _template
-        _eval_embedded_shell < "$_template_file" > /tmp/content.html
-        _content=$(cat /tmp/content.html)
+        _eval_embedded_shell < "$_template_file" > _cache/content.html
+        _content=$(cat _cache/content.html)
     done
 
     # Introduce new line at the end of file to overcome noeol.
