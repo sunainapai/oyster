@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Tests for render() function.
+# Tests for utility functions.
 
 # The MIT License (MIT)
 #

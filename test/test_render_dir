@@ -27,8 +27,11 @@
 
 _import=yes . ./oyster 
 
+SITE_DIR="$TWORK/_site"
+CACHE_DIR="$TWORK/_cache"
+
 test_render_dir()
 {
-    render_dir "$TDATA/dated-blog.in" "*.html" "" "$TWORK/blog.out"
-    diff -u "$TDATA/blog.out" "$TWORK/blog.out"
+    render_dir "$TDATA/dated-blog.in" "*.html" "" "/blog.out"
+    diff -u "$TDATA/blog.out" "$SITE_DIR/blog.out"
 }

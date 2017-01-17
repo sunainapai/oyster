@@ -27,6 +27,8 @@
 
 _import=yes . ./oyster 
 
+CACHE_DIR="$TWORK/_cache"
+
 test_simple_file()
 {
     render "$TDATA/simple.in.txt" > "$TWORK/simple.out.txt"

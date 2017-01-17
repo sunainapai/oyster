@@ -37,6 +37,12 @@ NL="
 "
 
 
+# CORE VARIABLES
+# ==============
+SITE_DIR=_site
+CACHE_DIR=_cache
+
+
 # CORE FUNCTIONS
 # ==============
 # The following core functions form the core API that may be invoked
@@ -75,18 +81,18 @@ NL="
 #   1 If the rendering fails.
 render()
 {
-    mkdir -p _cache
+    mkdir -p "$CACHE_DIR"
 
     if [ -n "$1" ]
     then
-        _eval_embedded_shell < "$1" > _cache/content.html
+        _eval_embedded_shell < "$1" > "$CACHE_DIR/content.html"
     else
-        _eval_embedded_shell <<eof > _cache/content.html
+        _eval_embedded_shell <<eof > "$CACHE_DIR/content.html"
 $(cat)
 eof
     fi
 
-    _content=$(cat _cache/content.html)
+    _content=$(cat "$CACHE_DIR/content.html")
     while [ -n "$_template" ]
     do
         _template_file=$_template
@@ -95,8 +101,8 @@ eof
         # does not define a template, _template variable remains unset
         # which ends the loop.
         unset _template
-        _eval_embedded_shell < "$_template_file" > _cache/content.html
-        _content=$(cat _cache/content.html)
+        _eval_embedded_shell < "$_template_file" > "$CACHE_DIR/content.html"
+        _content=$(cat "$CACHE_DIR/content.html")
     done
 
     # Introduce new line at the end of file to overcome noeol.
@@ -254,7 +260,7 @@ render_dir()
     while read -r file
     do
         # Create directory for post's index.html.
-        target_path=_site/"$4"/$(get_post_id "$file")/index.html
+        target_path="$SITE_DIR/$4/$(get_post_id "$file")/index.html"
         mkdir -p "$(dirname "$target_path")"
         post_create_date=$(get_post_date "$file")
         echo Rendering "$file" ...
@@ -773,7 +779,7 @@ eof
 #   1 On failure.
 _serve_site()
 {
-    cd _site || quit Cannot find site directory.
+    cd "$SITE_DIR" || quit Cannot find site directory.
 
     printf "%s\n" "$_SERVE_COMMANDS" | while read -r _command
     do
