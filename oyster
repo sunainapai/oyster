@@ -77,6 +77,15 @@ render()
 {
     if [ -n "$1" ]
     then
+        # Define variables that would be available to the post being
+        # rendered. These variables may be used in embedded shell within
+        # a post or its templates.
+        post_id=$(get_post_id "$1")
+        post_date=$(get_post_date "$1")
+
+        # Synonym for backward compatibility.
+        post_create_date=$post_date
+
         _eval_embedded_shell < "$1" > /tmp/content.html
     else
         _eval_embedded_shell <<eof > /tmp/content.html
@@ -102,6 +111,10 @@ eof
 
     unset _content
     unset _template_file
+
+    unset post_id
+    unset post_date
+    unset post_create_date
 }
 
 
@@ -254,7 +267,6 @@ render_dir()
         # Create directory for post's index.html.
         target_path="$4"/$(get_post_id "$file")/index.html
         mkdir -p "$(dirname "$target_path")"
-        post_create_date=$(get_post_date "$file")
         echo Rendering "$file" ...
         template "$3"
         unset post_title
