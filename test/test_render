@@ -41,6 +41,18 @@ test_stdin()
     diff -u "$TDATA/simple.out.txt" "$TWORK/simple.out.txt"
 }
 
+test_stdin_cache()
+{
+    render < "$TDATA/simple.in.txt" > "$TWORK/simple.out.txt"
+    # TODO: P1/2 cache contains an additional blank line. The head
+    # command selects only the meaningful content. Remove head, once
+    # oyster is fixed to prevent spurious blank lines.
+    get_p1_cache | head -n 2 > "$TWORK/simple.p1.txt"
+    get_p2_cache | head -n 2 > "$TWORK/simple.p2.txt"
+    diff -u "$TDATA/simple.out.txt" "$TWORK/simple.p1.txt" || return 1
+    diff -u "$TDATA/simple.out.txt" "$TWORK/simple.p2.txt" || return 1
+}
+
 test_whitespace_preservation()
 {
     render "$TDATA/whitespace.in.txt" > "$TWORK/whitespace.out.txt"
@@ -66,6 +78,24 @@ test_cascaded_template()
 
     diff -u "$TDATA/cascaded-template.out.txt" \
             "$TWORK/cascaded-template.out.txt"
+}
+
+test_template_cache()
+{
+    render "$TDATA/cascaded-template.in.txt" > \
+           "$TWORK/cascaded-template.out.txt"
+
+    get_p1_cache "$TDATA/cascaded-template.in.txt" > \
+                 "$TWORK/cascaded-template.p1.txt"
+
+    diff -u "$TDATA/cascaded-template.p1.txt" \
+            "$TWORK/cascaded-template.p1.txt" || return 1
+
+    get_p2_cache "$TDATA/cascaded-template.in.txt" > \
+                 "$TWORK/cascaded-template.p2.txt"
+
+    diff -u "$TDATA/cascaded-template.out.txt" \
+            "$TWORK/cascaded-template.p2.txt" || return 1
 }
 
 test_include_file()

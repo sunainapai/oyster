@@ -1,0 +1,77 @@
+#!/bin/sh
+
+# Tests for render_blog() function.
+
+# The MIT License (MIT)
+#
+# Copyright (c) 2016 Sunaina Pai
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+# CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+_import=yes . ./oyster 
+
+SITE_DIR="$TWORK/_site"
+CACHE_DIR="$TWORK/_cache"
+
+test_render_blog()
+{
+    render_blog "$TDATA/dated-blog.in" "*.html" "" "/dated-blog.out"
+    diff -r -u -N "$TDATA/dated-blog.out" "$SITE_DIR/dated-blog.out"
+}
+
+test_index_cache()
+{
+    render_blog "$TDATA/dated-blog.in" "*.html" "" "/dated-blog.out"
+    get_index_cache "$TDATA/dated-blog.in" > "$TWORK/index.out.txt"
+    diff -u "$TDATA/dated-blog-index.out.txt" "$TWORK/index.out.txt"
+}
+
+test_snip_cache()
+{
+    SNIP_LEN=10
+    render_blog "$TDATA/dated-blog.in" "*.html" "" "/dated-blog.out"
+    get_snip_cache "$TDATA/dated-blog.in/2017-01-03-baz.html" > \
+                   "$TWORK/snip.out.txt"
+    diff -u "$TDATA/dated-blog-snip.out.txt" "$TWORK/snip.out.txt"
+}
+
+test_get_index_html()
+{
+    SNIP_LEN=10
+    render_blog "$TDATA/dated-blog.in" "*.html" "" "/dated-blog.out"
+    get_index_html "$TDATA/dated-blog.in" > "$TWORK/blog-index.html"
+    diff -u "$TDATA/dated-blog-index.out.html" "$TWORK/blog-index.html"
+}
+
+test_get_index_html_2_posts()
+{
+    SNIP_LEN=10
+    render_blog "$TDATA/dated-blog.in" "*.html" "" "/dated-blog.out"
+    get_index_html "$TDATA/dated-blog.in" 2 > "$TWORK/blog-index.html"
+    diff -u "$TDATA/dated-blog-index-2-posts.out.html" "$TWORK/blog-index.html"
+}
+
+test_get_index_html_show_year()
+{
+    SNIP_LEN=10
+    render_blog "$TDATA/dated-blog.in" "*.html" "" "/dated-blog.out"
+    get_index_html "$TDATA/dated-blog.in" "" "year" > "$TWORK/blog-index.html"
+    diff -u "$TDATA/dated-blog-index-show-year.out.html" "$TWORK/blog-index.html"
+}

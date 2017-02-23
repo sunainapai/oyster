@@ -67,11 +67,11 @@ test_strip_html()
     grep -q -F -x "Foo Bar Baz" || return 1
 }
 
-test_truncate_text()
+test_snip()
 {
-    echo "Foo Bar Baz Qux Foo Bar Baz Qux" | truncate_text 4 |
+    echo "Foo Bar Baz Qux Foo Bar Baz Qux" | snip 4 |
     grep -q -F -x "Foo Bar Baz Qux" || return 1
 
-    printf "Foo Bar\nBaz Qux\nFoo Bar\nBaz Qux\n" | truncate_text 4 |
+    printf "Foo Bar\nBaz Qux\nFoo Bar\nBaz Qux\n" | snip 4 |
     grep -q -F -x "Foo Bar Baz Qux" || return 1
 }

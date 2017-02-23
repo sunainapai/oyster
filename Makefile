@@ -41,6 +41,6 @@ coveralls:
 	kcov --coveralls-id=$$TRAVIS_JOB_ID --exclude-path=test/test coverage test/test
 
 clean:
-	rm -rf coverage
+	rm -rf coverage _site _cache _test_work
 
 # vim: noet

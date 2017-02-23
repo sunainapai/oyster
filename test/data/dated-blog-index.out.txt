@@ -1,0 +1,3 @@
+2017-01-03:/dated-blog.out/baz/:test/data/dated-blog.in/2017-01-03-baz.html:Title of Baz
+2016-01-02:/dated-blog.out/bar/:test/data/dated-blog.in/2016-01-02-bar.html:
+2016-01-01:/dated-blog.out/foo/:test/data/dated-blog.in/2016-01-01-foo.html:Title of Foo

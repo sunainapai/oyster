@@ -33,14 +33,37 @@ SUPPORT_URL="https://github.com/sunainapai/oyster/issues"
 NAME=${0##*/}
 
 
-NL="
-"
+# CORE AND UTILITY VARIABLES
+# ==========================
+# The following variables are used by core and utility functions. These
+# variables may be altered in site configuration script to alter the
+# behaviour of the core and utility functions.
 
-
-# CORE VARIABLES
-# ==============
+# Directory location where the rendered pages are written to. This is
+# known as the site root of the website.
 SITE_DIR=_site
+
+# Directory where cache files are written to. The cache files are used
+# internally by this script to speed up certain rendering functions.
 CACHE_DIR=_cache
+
+# Length of blog post snippets. The length is specified in number of
+# words. The render_blog function truncates each post it encounters to
+# SNIP_LEN number of words and caches the truncated post snippet in snip
+# cache. The snip cache can then be used to render blog index, i.e. a
+# page with a list of recent blog posts or a page with an archive of all
+# blog posts.
+SNIP_LEN=25
+
+
+# PRIVATE VARIABLES
+# =================
+# The following variables may be used by any function in the script.
+# Do not modify these variables in site configuration script.
+
+# Newline character.
+_NL="
+"
 
 
 # CORE FUNCTIONS
@@ -81,18 +104,25 @@ CACHE_DIR=_cache
 #   1 If the rendering fails.
 render()
 {
-    mkdir -p "$CACHE_DIR"
+    _p1_cache_file="$CACHE_DIR/render/$1/p1.txt"
+    _p2_cache_file="$CACHE_DIR/render/$1/p2.txt"
+    mkdir -p "$CACHE_DIR/render/$1"
 
     if [ -n "$1" ]
     then
-        _eval_embedded_shell < "$1" > "$CACHE_DIR/content.html"
+        _eval_embedded_shell < "$1" > "$_p1_cache_file"
     else
-        _eval_embedded_shell <<eof > "$CACHE_DIR/content.html"
+        _eval_embedded_shell <<eof > "$_p1_cache_file"
 $(cat)
 eof
     fi
 
-    _content=$(cat "$CACHE_DIR/content.html")
+    # Copy P1 cache to P2 cache to ensure that P2 cache always contains
+    # the rendered content after all passes, regardless the number of
+    # passes, i.e. even when there is only pass.
+    cp "$_p1_cache_file" "$_p2_cache_file"
+
+    _content=$(cat "$_p2_cache_file")
     while [ -n "$_template" ]
     do
         _template_file=$_template
@@ -101,15 +131,90 @@ eof
         # does not define a template, _template variable remains unset
         # which ends the loop.
         unset _template
-        _eval_embedded_shell < "$_template_file" > "$CACHE_DIR/content.html"
-        _content=$(cat "$CACHE_DIR/content.html")
+        _eval_embedded_shell < "$_template_file" > "$_p2_cache_file"
+        _content=$(cat "$_p2_cache_file")
     done
 
     # Introduce new line at the end of file to overcome noeol.
     printf "%s\n" "$_content"
 
+    unset _p1_cache_file
+    unset _p2_cache_file
     unset _content
     unset _template_file
+}
+
+
+# Output cached rendered file after the first pass of rendering.
+#
+# When a file is rendered, it may undergo multiple passes of rendering.
+# In the first pass, all embedded shell code in the file is rendered,
+# but any template calls are not processed. This rendered file is cached
+# in a location called p1 cache (p1 stands for the first pass).
+#
+# The template calls are processed in subsequent calls of rendering. The
+# final rendered file is cached in a location called p2 cache (p2 stands
+# for the second and subsequent passes). When there is no template call
+# in the file, then the rendering is complete in the first pass itself.
+# However, a p2 cache that is identical to p1 cache is created. This is
+# created to ensure that one can always find the final rendered file in
+# p2 cache regardless of the number of passes required to render the
+# file.
+#
+# This function outputs the content of p1 cache that contains the
+# rendered file without the file embedded in any template.
+#
+# OPERANDS
+#   1. Path to the file that was rendered. If stdin was rendered, then
+#      omit this operand to get p1 cache for rendered stdin.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   The rendered file found in the p1 cache is written to the standard
+#   output.
+#
+# STDERR
+#   The standard error shall be used only for diagnostic messages.
+#
+# EXIT STATUS
+#   0 Cached rendered file is output successfully.
+#   1 An error occurred.
+get_p1_cache()
+{
+    cat "$CACHE_DIR/render/$1/p1.txt"
+}
+
+
+# Output cached rendered file after all passes of rendering.
+#
+# See description of the get_p1_cache function to read about how a file
+# may be rendered in multiple passes and the resulting p1 and p2 caches.
+#
+# This function outputs the content of p2 cache that contains the final
+# rendered file.
+#
+# OPERANDS
+#   1. Path to the file that was rendered. If stdin was rendered, then
+#      omit this operand to get p1 cache for rendered stdin.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   The rendered file found in the p2 cache is written to the standard
+#   output.
+#
+# STDERR
+#   The standard error shall be used only for diagnostic messages.
+#
+# EXIT STATUS
+#   0 Cached rendered file is output successfully.
+#   1 An error occurred.
+get_p2_cache()
+{
+    cat "$CACHE_DIR/render/$1/p2.txt"
 }
 
 
@@ -234,13 +339,22 @@ eof
 
 
 # DESCRIPTION
-#   Render multiple files in a directory.
+#   Render a blog directory containing blog posts.
 #
 # OPERANDS
 #   1. Path to source directory containing post files.
 #   2. File pattern (glob) to search for post files.
 #   3. Template to use to render files in source directory.
-#   4. Output directory where rendered files are written.
+#      Use empty string, i.e. "", if a template is not to be used or if
+#      the template is specified with template calls within the post
+#      files.
+#   4. Path relative to the site root of the website (SITE_DIR) where
+#      the rendered blog is to be made available. The path should begin
+#      with a forward slash, i.e. "/". If the path does not begin with a
+#      forward slash, then a forward slash is added automatically at the
+#      beginning before using the path, thus both "blog" and "/blog"
+#      would behave equivalently, i.e. both would cause this function to
+#      place the rendered blog posts at $SITE_DIR/blog/.
 #
 # STDIN
 #   Not used.
@@ -254,20 +368,182 @@ eof
 # EXIT STATUS
 #   0 On success.
 #   1 On failure.
-render_dir()
+render_blog()
 {
     find "$1" -name "$2" |
-    while read -r file
+    while read -r post_file
     do
+        post_date=$(get_post_date "$post_file")
+        post_id=$(get_post_id "$post_file")
+        post_url="$4/$post_id/"
+
+        printf %s "$post_url" | grep -q "^/" || post_url="/$post_url"
+
+        post_create_date=$post_date
+
         # Create directory for post's index.html.
-        target_path="$SITE_DIR/$4/$(get_post_id "$file")/index.html"
-        mkdir -p "$(dirname "$target_path")"
-        post_create_date=$(get_post_date "$file")
-        echo Rendering "$file" ...
+        mkdir -p "$SITE_DIR/$post_url/"
+
+        # Write rendered post file.
+        printf "%s\n" "Rendering $post_file ..."
         template "$3"
         unset post_title
-        render "$file" > "$target_path"
+        render "$post_file" > "$SITE_DIR$post_url/index.html"
+
+        # Cache post snippet.
+        get_p1_cache "$post_file" | strip_html | snip "$SNIP_LEN" > \
+        "$CACHE_DIR/render/$post_file/snip.txt"
+
+        # Update blog index cache.
+        printf "%s\n" "$post_date:$post_url:$post_file:$post_title" >> \
+        "$CACHE_DIR/render/$1/index.txt"
+
+        unset post_date
+        unset post_create_date
+        unset post_id
+        unset post_url
+        unset post_file
     done
+}
+
+
+# DESCRIPTION
+#   Output cached index of blog posts.
+#
+#   When render_blog function is used to render a directory of posts, an
+#   index for all posts is created and cached. This index is a sequence
+#   of lines with each line containing metadata about each post. Each
+#   line is in the following format.
+#
+#     <date>:<url>:<filepath>:<title>
+#
+#   where
+#
+#     - <date> is the post creation date.
+#     - <url> is the URL of the post relative to the site root.
+#       <url> always begins with a forward slash.
+#     - <filepath> is the path to the post file.
+#     - <title> is the $post_title variable defined in the post file.
+#
+#   This function outputs this index in reverse sorted order, i.e. in
+#   descending order of post creation dates. Therefore, newer posts
+#   appear before older posts.
+#
+# OPERANDS
+#   1. Path to source directory containing post files that were
+#      rendered.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   The index cache is written to the standard output in descending
+#   order of post creation dates.
+#
+# STDERR
+#   The standard error shall be used only for diagnostic messages.
+#
+# EXIT STATUS
+#   0 On success.
+#   1 On failure.
+get_index_cache()
+{
+    sort -n -r "$CACHE_DIR/render/$1/index.txt"
+}
+
+
+# DESCRIPTION
+#   Output post snippet cache.
+#
+#   When render_blog function is used to render a directory of posts, a
+#   post snippet is created out of each post and cached. The post
+#   snippet contains only the first SNIP_LEN number of words.
+#
+#   This function outputs post snippet for a specified post.
+#
+# OPERANDS
+#   1. Path to a post file that was rendered.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   The post snippet found in the cache is written to the standard
+#   output.
+#
+# STDERR
+#   The standard error shall be used only for diagnostic messages.
+#
+# EXIT STATUS
+#   0 On success.
+#   1 On failure.
+get_snip_cache()
+{
+    cat "$CACHE_DIR/render/$1/snip.txt"
+}
+
+
+# DESCRIPTION
+#   Output blog index as HTML.
+#
+#   When render_blog function is used to render a directory of posts, an
+#   index for all posts is created and cached. This function outputs
+#   this index cache in HTML format. This function may be invoked from
+#   embedded shell code of any page that wants to display a list of blog
+#   posts.
+#
+#   This function must be called for a directory of post files only
+#   after render_blog has been called for the same directory.
+#
+# OPERANDS
+#   1. Path to source directory containing post files.
+#   2. Number of posts to render. If this operand is a positive integer,
+#      then it indicates the number of posts to render. If this operand
+#      is missing or if this operand is not a positive integer, then all
+#      posts are rendered.
+#   3. Whether to group posts by year. Specify "year" to group posts by
+#      year. If this operand is missing or if this operand is not
+#      "year", then the posts are not grouped by year.
+#
+# STDIN
+#   Not used.
+#
+# STDOUT
+#   The post snippet found in the cache is written to the standard
+#   output in HTML format.
+#
+# STDERR
+#   The standard error shall be used only for diagnostic messages.
+#
+# EXIT STATUS
+#   0 On success.
+#   1 On failure.
+get_index_html()
+{
+    post_count=0
+
+    get_index_cache "$1" |
+    while IFS=: read -r post_date post_url post_file post_title
+    do
+        post_snip=$(get_snip_cache "$post_file")
+        post_year=$(get_post_year "$post_file")
+
+        if [ "$3" = year ] && [ "$prev_post_year" != "$post_year" ]
+        then
+            printf "<h2>%s</h2>\n<hr>\n" "$post_year"
+            prev_post_year=$post_year
+        fi
+
+        printf "%s\n" "<h3><a href="$post_url">$post_title</a></h3>"
+        printf "%s\n" "<p>$post_snip <a href="$post_url">...</a></p>"
+        post_count=$(( $post_count + 1 ))
+        [ $post_count = "$2" ] && break
+    done
+
+    unset post_count
+    unset post_snip
+    unset post_year
+    unset prev_post_year
 }
 
 
@@ -289,7 +565,7 @@ render_dir()
 #   the behaviour is unspecified.
 #
 #   The post ID is used as post slug in the URL of the post when the
-#   posts are rendered by the render_dir function.
+#   posts are rendered by the render_blog function.
 #
 # OPERANDS
 #   1. Path to post file.
@@ -433,10 +709,10 @@ strip_html()
 # EXIT STATUS
 #   0 On success.
 #   1 On failure.
-truncate_text()
+snip()
 {
     # Follow each word with a space and newline.
-    sed "s/$/ /" | sed "s/ / \\$NL/g" |
+    sed "s/$/ /" | sed "s/ / \\$_NL/g" |
 
     # Ignore lines consisting only of whitespace and non-printable
     # characters.
@@ -448,8 +724,8 @@ truncate_text()
     # Remove the newlines.
     tr -d '\n' |
 
-    # Remove the trailing space.
-    sed 's/ $//'
+    # Replace the trailing space with a newline.
+    sed "s/ $/\\$_NL/"
 }
 
 
@@ -502,8 +778,8 @@ _eval_embedded_shell()
         # to work around a kcov bug; kcov misses all lines except the
         # last one in a multiline command substitution.
         tokens=$(printf %s "$_line")
-        tokens=$(printf %s "$tokens" | sed "s/{{/\\$NL{{/g")
-        tokens=$(printf %s "$tokens" | sed "s/}}/}}\\$NL/g")
+        tokens=$(printf %s "$tokens" | sed "s/{{/\\$_NL{{/g")
+        tokens=$(printf %s "$tokens" | sed "s/}}/}}\\$_NL/g")
 
         # Loop over the each line of tokenized input and evaluate the
         # shell-script-tokens.
