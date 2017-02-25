@@ -49,7 +49,19 @@ test_snip_cache()
     render_blog "$TDATA/dated-blog.in" "*.html" "" "/dated-blog.out"
     get_snip_cache "$TDATA/dated-blog.in/2017-01-03-baz.html" > \
                    "$TWORK/snip.out.txt"
-    diff -u "$TDATA/dated-blog-snip.out.txt" "$TWORK/snip.out.txt"
+
+    # On Mac OS X, sed adds a newline in the end if the input stream did
+    # not end with a newline. As a result, on Mac OS X, snip.out.txt
+    # would contain an additional blank line in the end. Therefore, we
+    # carefully test that the first 10 words only are present in the
+    # output ...
+    grep -q "^foo bar baz qux word5 word6 word7 word8 word9 word10$" \
+         "$TWORK/snip.out.txt" || return 1
+
+    # ... and also test that the 11th word is not present in the output.
+    grep "word11" "$TWORK/snip.out.txt" && return 1
+
+    return 0
 }
 
 test_get_index_html()
