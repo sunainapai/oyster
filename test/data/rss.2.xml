@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+
+<channel>
+<title>My Blog</title>
+<link>http://www.example.com/blog/</link>
+<description>My thoughts on technology</description>
+
+<item>
+<title>Title of Baz</title>
+<link>http://www.example.com/dated-blog.out/baz/</link>
+<description>
+<![CDATA[
+<p>foo bar baz qux word5 word6 word7 word8 word9 word10 word11 word12 word13 word14 word15 word16 word17 word18 word19 word20 word21 word22 word23 word24 word25 <a href="http://www.example.com/dated-blog.out/baz/">...</a></p>
+<p>(<a href="http://www.example.com/dated-blog.out/baz/">Read More</a>)
+]]>
+</description>
+<pubDate>2017-01-03</pubDate>
+</item>
+
+<item>
+<title></title>
+<link>http://www.example.com/dated-blog.out/bar/</link>
+<description>
+<![CDATA[
+<p>foo bar <a href="http://www.example.com/dated-blog.out/bar/">...</a></p>
+<p>(<a href="http://www.example.com/dated-blog.out/bar/">Read More</a>)
+]]>
+</description>
+<pubDate>2016-01-02</pubDate>
+</item>
+
+</channel>
+</rss>

@@ -382,7 +382,7 @@ render_blog()
         post_create_date=$post_date
 
         # Create directory for post's index.html.
-        mkdir -p "$SITE_DIR/$post_url/"
+        mkdir -p "$SITE_DIR$post_url/"
 
         # Write rendered post file.
         printf "%s\n" "Rendering $post_file ..."
@@ -404,6 +404,88 @@ render_blog()
         unset post_url
         unset post_file
     done
+}
+
+
+# DESCRIPTION
+#   Write RSS feed XML to the specified path.
+#
+# OPERANDS
+#   1. Path to source directory of blog posts, e.g. "content/blog".
+#   2. Number of posts to include in the RSS feed. If this operand is a
+#      positive integer, then it indicates the number of posts to
+#      render. If this operand is missing or if this operand is not a
+#      positive integer, then all posts are rendered.
+#   3. Blog title, e.g. "My Blog".
+#   4. Blog URL, e.g. "http://www.example.com/blog/".
+#   5. Blog description, e.g. "My thoughts on technology".
+#   6. Path relative to the site root of the website (SITE_DIR) where
+#      the rendered feed is to be made available. The path should begin
+#      with a forward slash, i.e. "/". If the path does not begin with a
+#      forward slash, then a forward slash is added automatically at the
+#      beginning before using the path, thus both "blog/rss/index.html"
+#      and "/blog/rss/index.html" would behave equivalently, i.e. both
+#      would cause this function to place the rendered blog posts at
+#      $SITE_DIR/blog/.
+render_feed()
+{
+    _post_count=0
+
+    _feed_file="$6"
+    printf %s "$_feed_file" | grep -q "^/" || _feed_file="/$_feed_file"
+    _feed_file="$SITE_DIR$_feed_file"
+
+    _site_base_url=$(printf "%s" "$4" | cut -d/ -f1-3)
+
+    mkdir -p "$(dirname "$_feed_file")"
+    cat <<eof > "$_feed_file"
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+
+<channel>
+<title>$3</title>
+<link>$4</link>
+<description>$5</description>
+eof
+
+    get_index_cache "$1" |
+    while IFS=: read -r _post_date _post_url _post_file _post_title
+    do
+        _post_snip=$(get_snip_cache "$_post_file")
+        _post_url=$_site_base_url$_post_url
+        cat <<eof >> "$_feed_file"
+
+<item>
+<title>$_post_title</title>
+<link>$_post_url</link>
+<description>
+<![CDATA[
+<p>$_post_snip <a href="$_post_url">...</a></p>
+<p>(<a href="$_post_url">Read More</a>)
+]]>
+</description>
+<pubDate>$_post_date</pubDate>
+</item>
+eof
+        _post_count=$(( $_post_count + 1 ))
+        [ $_post_count = "$2" ] && break
+    done
+
+    cat <<eof >> "$_feed_file"
+
+</channel>
+</rss>
+eof
+
+    unset _post_count
+    unset _feed_file
+    unset _site_base_url
+    unset _post_date
+    unset _post_url
+    unset _post_file
+    unset _post_title
+    unset _post_snip
+    unset _post_count
 }
 
 
