@@ -27,8 +27,8 @@
 
 _import=yes . ./oyster 
 
-SITE_DIR="$TWORK/_site"
-CACHE_DIR="$TWORK/_cache"
+site_dir="$TWORK/_site"
+cache_dir="$TWORK/_cache"
 
 test_render_rss()
 {
@@ -37,7 +37,7 @@ test_render_rss()
                 "My Blog" "http://www.example.com/blog/" \
                 "My thoughts on technology" \
                 "/rss.xml"
-    diff -u "$TDATA/rss.0.xml" "$SITE_DIR/rss.xml"
+    diff -u "$TDATA/rss.0.xml" "$site_dir/rss.xml"
 }
 
 test_render_rss_2()
@@ -47,5 +47,5 @@ test_render_rss_2()
                 "My Blog" "http://www.example.com/blog/" \
                 "My thoughts on technology" \
                 "/rss.xml"
-    diff -u "$TDATA/rss.2.xml" "$SITE_DIR/rss.xml"
+    diff -u "$TDATA/rss.2.xml" "$site_dir/rss.xml"
 }

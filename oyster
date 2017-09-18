@@ -41,19 +41,19 @@ NAME=${0##*/}
 
 # Directory location where the rendered pages are written to. This is
 # known as the site root of the website.
-SITE_DIR=_site
+site_dir=_site
 
 # Directory where cache files are written to. The cache files are used
 # internally by this script to speed up certain rendering functions.
-CACHE_DIR=_cache
+cache_dir=_cache
 
 # Length of blog post snippets. The length is specified in number of
 # words. The render_blog function truncates each post it encounters to
-# SNIP_LEN number of words and caches the truncated post snippet in snip
+# snip_len number of words and caches the truncated post snippet in snip
 # cache. The snip cache can then be used to render blog index, i.e. a
 # page with a list of recent blog posts or a page with an archive of all
 # blog posts.
-SNIP_LEN=25
+snip_len=25
 
 
 # PRIVATE VARIABLES
@@ -62,7 +62,7 @@ SNIP_LEN=25
 # Do not modify these variables in site configuration script.
 
 # Newline character.
-_NL="
+_nl="
 "
 
 
@@ -104,9 +104,9 @@ _NL="
 #   1 If the rendering fails.
 render()
 {
-    _p1_cache_file="$CACHE_DIR/render/$1/p1.txt"
-    _p2_cache_file="$CACHE_DIR/render/$1/p2.txt"
-    mkdir -p "$CACHE_DIR/render/$1"
+    _p1_cache_file="$cache_dir/render/$1/p1.txt"
+    _p2_cache_file="$cache_dir/render/$1/p2.txt"
+    mkdir -p "$cache_dir/render/$1"
 
     if [ -n "$1" ]
     then
@@ -183,7 +183,7 @@ eof
 #   1 An error occurred.
 get_p1_cache()
 {
-    cat "$CACHE_DIR/render/$1/p1.txt"
+    cat "$cache_dir/render/$1/p1.txt"
 }
 
 
@@ -214,7 +214,7 @@ get_p1_cache()
 #   1 An error occurred.
 get_p2_cache()
 {
-    cat "$CACHE_DIR/render/$1/p2.txt"
+    cat "$cache_dir/render/$1/p2.txt"
 }
 
 
@@ -348,13 +348,13 @@ eof
 #      Use empty string, i.e. "", if a template is not to be used or if
 #      the template is specified with template calls within the post
 #      files.
-#   4. Path relative to the site root of the website (SITE_DIR) where
+#   4. Path relative to the site root of the website (site_dir) where
 #      the rendered blog is to be made available. The path should begin
 #      with a forward slash, i.e. "/". If the path does not begin with a
 #      forward slash, then a forward slash is added automatically at the
 #      beginning before using the path, thus both "blog" and "/blog"
 #      would behave equivalently, i.e. both would cause this function to
-#      place the rendered blog posts at $SITE_DIR/blog/.
+#      place the rendered blog posts at $site_dir/blog/.
 #
 # STDIN
 #   Not used.
@@ -382,21 +382,21 @@ render_blog()
         post_create_date=$post_date
 
         # Create directory for post's index.html.
-        mkdir -p "$SITE_DIR$post_url/"
+        mkdir -p "$site_dir$post_url/"
 
         # Write rendered post file.
         printf "%s\n" "Rendering $post_file ..."
         template "$3"
         unset post_title
-        render "$post_file" > "$SITE_DIR$post_url/index.html"
+        render "$post_file" > "$site_dir$post_url/index.html"
 
         # Cache post snippet.
-        get_p1_cache "$post_file" | strip_html | snip "$SNIP_LEN" > \
-        "$CACHE_DIR/render/$post_file/snip.txt"
+        get_p1_cache "$post_file" | strip_html | snip "$snip_len" > \
+        "$cache_dir/render/$post_file/snip.txt"
 
         # Update blog index cache.
         printf "%s\n" "$post_date:$post_url:$post_file:$post_title" >> \
-        "$CACHE_DIR/render/$1/index.txt"
+        "$cache_dir/render/$1/index.txt"
 
         unset post_date
         unset post_create_date
@@ -419,21 +419,21 @@ render_blog()
 #   3. Blog title, e.g. "My Blog".
 #   4. Blog URL, e.g. "http://www.example.com/blog/".
 #   5. Blog description, e.g. "My thoughts on technology".
-#   6. Path relative to the site root of the website (SITE_DIR) where
+#   6. Path relative to the site root of the website (site_dir) where
 #      the rendered feed is to be made available. The path should begin
 #      with a forward slash, i.e. "/". If the path does not begin with a
 #      forward slash, then a forward slash is added automatically at the
 #      beginning before using the path, thus both "blog/rss/index.html"
 #      and "/blog/rss/index.html" would behave equivalently, i.e. both
 #      would cause this function to place the rendered blog posts at
-#      $SITE_DIR/blog/.
+#      $site_dir/blog/.
 render_feed()
 {
     _post_count=0
 
     _feed_file="$6"
     printf %s "$_feed_file" | grep -q "^/" || _feed_file="/$_feed_file"
-    _feed_file="$SITE_DIR$_feed_file"
+    _feed_file="$site_dir$_feed_file"
 
     _site_base_url=$(printf "%s" "$4" | cut -d/ -f1-3)
 
@@ -530,7 +530,7 @@ eof
 #   1 On failure.
 get_index_cache()
 {
-    sort -n -r "$CACHE_DIR/render/$1/index.txt"
+    sort -n -r "$cache_dir/render/$1/index.txt"
 }
 
 
@@ -539,7 +539,7 @@ get_index_cache()
 #
 #   When render_blog function is used to render a directory of posts, a
 #   post snippet is created out of each post and cached. The post
-#   snippet contains only the first SNIP_LEN number of words.
+#   snippet contains only the first snip_len number of words.
 #
 #   This function outputs post snippet for a specified post.
 #
@@ -561,7 +561,7 @@ get_index_cache()
 #   1 On failure.
 get_snip_cache()
 {
-    cat "$CACHE_DIR/render/$1/snip.txt"
+    cat "$cache_dir/render/$1/snip.txt"
 }
 
 
@@ -794,7 +794,7 @@ strip_html()
 snip()
 {
     # Follow each word with a space and newline.
-    sed "s/$/ /" | sed "s/ / \\$_NL/g" |
+    sed "s/$/ /" | sed "s/ / \\$_nl/g" |
 
     # Ignore lines consisting only of whitespace and non-printable
     # characters.
@@ -807,7 +807,7 @@ snip()
     tr -d '\n' |
 
     # Replace the trailing space with a newline.
-    sed "s/ $/\\$_NL/"
+    sed "s/ $/\\$_nl/"
 }
 
 
@@ -860,8 +860,8 @@ _eval_embedded_shell()
         # to work around a kcov bug; kcov misses all lines except the
         # last one in a multiline command substitution.
         tokens=$(printf %s "$_line")
-        tokens=$(printf %s "$tokens" | sed "s/{{/\\$_NL{{/g")
-        tokens=$(printf %s "$tokens" | sed "s/}}/}}\\$_NL/g")
+        tokens=$(printf %s "$tokens" | sed "s/{{/\\$_nl{{/g")
+        tokens=$(printf %s "$tokens" | sed "s/}}/}}\\$_nl/g")
 
         # Loop over the each line of tokenized input and evaluate the
         # shell-script-tokens.
@@ -1137,7 +1137,7 @@ eof
 #   1 On failure.
 _serve_site()
 {
-    cd "$SITE_DIR" || quit Cannot find site directory.
+    cd "$site_dir" || quit Cannot find site directory.
 
     printf "%s\n" "$_SERVE_COMMANDS" | while read -r _command
     do

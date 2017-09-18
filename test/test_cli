@@ -64,7 +64,7 @@ test_no_args()
 test_serve()
 {
     cd "$TDATA/blank-site.in"
-    _SERVE_COMMANDS="false${_NL}false${_NL}echo foo"
+    _SERVE_COMMANDS="false${_nl}false${_nl}echo foo"
     _main --serve | grep -q foo || return 1
     cd "$OLDPWD"
 }

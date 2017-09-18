@@ -27,13 +27,13 @@
 
 _import=yes . ./oyster 
 
-SITE_DIR="$TWORK/_site"
-CACHE_DIR="$TWORK/_cache"
+site_dir="$TWORK/_site"
+cache_dir="$TWORK/_cache"
 
 test_render_blog()
 {
     render_blog "$TDATA/dated-blog.in" "*.html" "" "/dated-blog.out"
-    diff -r -u -N "$TDATA/dated-blog.out" "$SITE_DIR/dated-blog.out"
+    diff -r -u -N "$TDATA/dated-blog.out" "$site_dir/dated-blog.out"
 }
 
 test_index_cache()
@@ -45,7 +45,7 @@ test_index_cache()
 
 test_snip_cache()
 {
-    SNIP_LEN=10
+    snip_len=10
     render_blog "$TDATA/dated-blog.in" "*.html" "" "/dated-blog.out"
     get_snip_cache "$TDATA/dated-blog.in/2017-01-03-baz.html" > \
                    "$TWORK/snip.out.txt"
@@ -66,7 +66,7 @@ test_snip_cache()
 
 test_get_index_html()
 {
-    SNIP_LEN=10
+    snip_len=10
     render_blog "$TDATA/dated-blog.in" "*.html" "" "/dated-blog.out"
     get_index_html "$TDATA/dated-blog.in" > "$TWORK/blog-index.html"
     diff -u "$TDATA/dated-blog-index.out.html" "$TWORK/blog-index.html"
@@ -74,7 +74,7 @@ test_get_index_html()
 
 test_get_index_html_2_posts()
 {
-    SNIP_LEN=10
+    snip_len=10
     render_blog "$TDATA/dated-blog.in" "*.html" "" "/dated-blog.out"
     get_index_html "$TDATA/dated-blog.in" 2 > "$TWORK/blog-index.html"
     diff -u "$TDATA/dated-blog-index-2-posts.out.html" "$TWORK/blog-index.html"
@@ -82,7 +82,7 @@ test_get_index_html_2_posts()
 
 test_get_index_html_show_year()
 {
-    SNIP_LEN=10
+    snip_len=10
     render_blog "$TDATA/dated-blog.in" "*.html" "" "/dated-blog.out"
     get_index_html "$TDATA/dated-blog.in" "" "year" > "$TWORK/blog-index.html"
     diff -u "$TDATA/dated-blog-index-show-year.out.html" "$TWORK/blog-index.html"
