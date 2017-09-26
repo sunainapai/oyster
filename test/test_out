@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Tests for test_render_rss() function.
+# Tests for render() function.
 
 # The MIT License (MIT)
 #
@@ -27,25 +27,28 @@
 
 _import=yes . ./oyster
 
-site_dir="$TWORK/_site"
-cache_dir="$TWORK/_cache"
+CACHE_DIR="$TWORK/_cache"
 
-test_render_rss()
+test_out_string()
 {
-    render_blog "$TDATA/dated-blog.in" "*.html" "" "/dated-blog.out"
-    render_feed "$TDATA/dated-blog.in" 0 \
-                "My Blog" "http://www.example.com/blog/" \
-                "My thoughts on technology" \
-                "/rss.xml"
-    diff -u "$TDATA/rss.0.xml" "$site_dir/rss.xml"
+    out foo > "$TWORK/out.txt"
+    diff -u "$TDATA/out1.out.txt" "$TWORK/out.txt"
 }
 
-test_render_rss_2()
+test_out_strings()
 {
-    render_blog "$TDATA/dated-blog.in" "*.html" "" "/dated-blog.out"
-    render_feed "$TDATA/dated-blog.in" 2 \
-                "My Blog" "http://www.example.com/blog/" \
-                "My thoughts on technology" \
-                "/rss.xml"
-    diff -u "$TDATA/rss.2.xml" "$site_dir/rss.xml"
+    out "foo  bar" "baz  qux" > "$TWORK/out.txt"
+    diff -u "$TDATA/out2.out.txt" "$TWORK/out.txt"
+}
+
+test_out_stdin()
+{
+    echo foo | out > "$TWORK/out.txt"
+    diff -u "$TDATA/out1.out.txt" "$TWORK/out.txt"
+}
+
+test_remove_trailing_newlines()
+{
+    printf "\n\n\n   foo  bar\nbaz  qux   \n  \n\n\n" | out > "$TWORK/out.txt"
+    diff -u "$TDATA/out3.out.txt" "$TWORK/out.txt"
 }

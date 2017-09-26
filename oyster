@@ -108,7 +108,7 @@ render()
     _p2_cache_file="$cache_dir/render/$1/p2.txt"
     mkdir -p "$cache_dir/render/$1"
 
-    if [ -n "$1" ]
+    if [ $# -gt 0 ]
     then
         _eval_embedded_shell < "$1" > "$_p1_cache_file"
     else
@@ -808,6 +808,46 @@ snip()
 
     # Replace the trailing space with a newline.
     sed "s/ $/\\$_nl/"
+}
+
+
+# DESCRIPTION
+#   Print specified strings with trailing newlines removed.
+#
+#   The strings to print may be specified either as a single argument or
+#   multiple arguments. When multiple arguments are specified, the
+#   multiple arguments are joined with spaces in between and printed.
+#
+#   If no argument is specified, then this function accepts the string
+#   to print from the standard input.
+#
+# OPERANDS
+#   1. Strings
+#
+# STDIN
+#   Text to print is read from standard input if no argument is
+#   specified.
+#
+# STDOUT
+#   Strings specified as arguments are printed with a space inserted
+#   between each pair of arguments. If no arguments are specified, the
+#   input text in the stanard input is printed.
+#
+# STDERR
+#   Not used.
+#
+# EXIT STATUS
+#   0 On success.
+#   1 On failure.
+out()
+{
+    if [ $# -eq 0 ]
+    then
+        set "$(cat)"
+        printf "%s" "$*"
+    else
+        printf "%s" "$*" | out
+    fi
 }
 
 
